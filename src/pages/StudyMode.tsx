@@ -53,13 +53,8 @@ export default function StudyMode() {
     if (currentIndex < deckCards.length - 1) {
       setDirection(1);
       setIsAnimatingFlip(false);
-      if (isFlipped) {
-        setIsFlipped(false);
-        // Wait for flip animation to finish before changing index
-        setTimeout(() => setCurrentIndex(prev => prev + 1), 300);
-      } else {
-        setCurrentIndex(prev => prev + 1);
-      }
+      setIsFlipped(false);
+      setCurrentIndex(prev => prev + 1);
     } else {
       setIsFinished(true);
     }
@@ -69,12 +64,8 @@ export default function StudyMode() {
     if (currentIndex > 0) {
       setDirection(-1);
       setIsAnimatingFlip(false);
-      if (isFlipped) {
-        setIsFlipped(false);
-        setTimeout(() => setCurrentIndex(prev => prev - 1), 300);
-      } else {
-        setCurrentIndex(prev => prev - 1);
-      }
+      setIsFlipped(false);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
@@ -183,23 +174,23 @@ export default function StudyMode() {
         className="relative h-[400px] w-full perspective-1000 cursor-pointer group overflow-hidden rounded-3xl"
         onClick={handleFlip}
       >
-        <AnimatePresence mode='wait' custom={direction}>
+        <AnimatePresence mode='wait' custom={{ direction, isAnimatingFlip, isFlipped }}>
           <motion.div
             key={currentIndex + (isFlipped ? '-back' : '-front')}
-            custom={direction}
+            custom={{ direction, isAnimatingFlip, isFlipped }}
             variants={{
-              enter: (d: number) => {
+              enter: (custom: { direction: number; isAnimatingFlip: boolean; isFlipped: boolean }) => {
                 // If it's a flip, don't translate x, just rotate
-                if (isAnimatingFlip) {
+                if (custom.isAnimatingFlip) {
                   return {
                     x: 0,
                     opacity: 0,
-                    rotateY: isFlipped ? -90 : 90,
+                    rotateY: custom.isFlipped ? -90 : 90,
                   };
                 }
                 // If it's a card change, translate x
                 return {
-                  x: d * 100 + '%',
+                  x: custom.direction * 100 + '%',
                   opacity: 0,
                   rotateY: 0,
                 };
@@ -209,18 +200,18 @@ export default function StudyMode() {
                 opacity: 1, 
                 rotateY: 0 
               },
-              exit: (d: number) => {
+              exit: (custom: { direction: number; isAnimatingFlip: boolean; isFlipped: boolean }) => {
                 // If it's a flip
-                if (isAnimatingFlip) {
+                if (custom.isAnimatingFlip) {
                   return {
                     x: 0,
                     opacity: 0,
-                    rotateY: isFlipped ? 90 : -90,
+                    rotateY: custom.isFlipped ? 90 : -90,
                   };
                 }
                 // If it's a card change
                 return {
-                  x: d * -100 + '%',
+                  x: custom.direction * -100 + '%',
                   opacity: 0,
                   rotateY: 0,
                 };
