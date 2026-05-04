@@ -9,8 +9,7 @@ import {
   CheckCircle2, 
   Circle,
   Trophy,
-  RefreshCw,
-  Home
+  RefreshCw
 } from 'lucide-react';
 import { useFlashcardStore } from '@/store/useFlashcardStore';
 
@@ -25,6 +24,8 @@ export default function StudyMode() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const [isAnimatingFlip, setIsAnimatingFlip] = useState(false);
 
   if (!deck || deckCards.length === 0) {
     return (
@@ -50,8 +51,15 @@ export default function StudyMode() {
 
   const handleNext = () => {
     if (currentIndex < deckCards.length - 1) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 100);
+      setDirection(1);
+      setIsAnimatingFlip(false);
+      if (isFlipped) {
+        setIsFlipped(false);
+        // Wait for flip animation to finish before changing index
+        setTimeout(() => setCurrentIndex(prev => prev + 1), 300);
+      } else {
+        setCurrentIndex(prev => prev + 1);
+      }
     } else {
       setIsFinished(true);
     }
@@ -59,8 +67,14 @@ export default function StudyMode() {
 
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setIsFlipped(false);
-      setTimeout(() => setCurrentIndex(prev => prev - 1), 100);
+      setDirection(-1);
+      setIsAnimatingFlip(false);
+      if (isFlipped) {
+        setIsFlipped(false);
+        setTimeout(() => setCurrentIndex(prev => prev - 1), 300);
+      } else {
+        setCurrentIndex(prev => prev - 1);
+      }
     }
   };
 
@@ -68,6 +82,12 @@ export default function StudyMode() {
     setCurrentIndex(0);
     setIsFlipped(false);
     setIsFinished(false);
+    setIsAnimatingFlip(false);
+  };
+
+  const handleFlip = () => {
+    setIsAnimatingFlip(true);
+    setIsFlipped(!isFlipped);
   };
 
   const handleResetMastery = () => {
@@ -160,17 +180,57 @@ export default function StudyMode() {
 
       {/* Flashcard Component */}
       <div 
-        className="relative h-[400px] w-full perspective-1000 cursor-pointer group"
-        onClick={() => setIsFlipped(!isFlipped)}
+        className="relative h-[400px] w-full perspective-1000 cursor-pointer group overflow-hidden rounded-3xl"
+        onClick={handleFlip}
       >
-        <AnimatePresence mode='wait'>
+        <AnimatePresence mode='wait' custom={direction}>
           <motion.div
             key={currentIndex + (isFlipped ? '-back' : '-front')}
-            initial={{ rotateY: isFlipped ? -90 : 90, opacity: 0 }}
-            animate={{ rotateY: 0, opacity: 1 }}
-            exit={{ rotateY: isFlipped ? 90 : -90, opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className={`absolute inset-0 w-full h-full rounded-3xl p-10 flex flex-col items-center justify-center text-center shadow-xl border-2 transition-colors ${
+            custom={direction}
+            variants={{
+              enter: (d: number) => {
+                // If it's a flip, don't translate x, just rotate
+                if (isAnimatingFlip) {
+                  return {
+                    x: 0,
+                    opacity: 0,
+                    rotateY: isFlipped ? -90 : 90,
+                  };
+                }
+                // If it's a card change, translate x
+                return {
+                  x: d * 100 + '%',
+                  opacity: 0,
+                  rotateY: 0,
+                };
+              },
+              center: { 
+                x: '0%', 
+                opacity: 1, 
+                rotateY: 0 
+              },
+              exit: (d: number) => {
+                // If it's a flip
+                if (isAnimatingFlip) {
+                  return {
+                    x: 0,
+                    opacity: 0,
+                    rotateY: isFlipped ? 90 : -90,
+                  };
+                }
+                // If it's a card change
+                return {
+                  x: d * -100 + '%',
+                  opacity: 0,
+                  rotateY: 0,
+                };
+              },
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className={`absolute inset-0 w-full h-full p-10 flex flex-col items-center justify-center text-center shadow-xl border-2 transition-colors ${
               isFlipped 
                 ? 'bg-blue-600 border-blue-500 text-white' 
                 : 'bg-white border-gray-100 text-gray-900'
