@@ -9,9 +9,11 @@ import {
   Save, 
   X,
   CheckCircle2,
-  Circle
+  Circle,
+  Wand2
 } from 'lucide-react';
 import { useFlashcardStore } from '@/store/useFlashcardStore';
+import AiGenerateModal from '@/components/ai/AiGenerateModal';
 
 export default function DeckDetails() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +42,16 @@ export default function DeckDetails() {
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editQuestion, setEditQuestion] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
+
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  const openAiModal = () => {
+    setIsAiModalOpen(true);
+  };
+
+  const closeAiModal = () => {
+    setIsAiModalOpen(false);
+  };
 
   if (!deck) {
     return (
@@ -149,16 +161,27 @@ export default function DeckDetails() {
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setDeckName(deck.name);
-                setDeckDesc(deck.description);
-                setIsEditingDeck(true);
-              }}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-            >
-              <Edit2 className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openAiModal}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-md hover:bg-indigo-700 transition-all active:scale-95"
+                title="AI 生成闪卡"
+              >
+                <Wand2 className="w-5 h-5" />
+                AI 生成
+              </button>
+              <button
+                onClick={() => {
+                  setDeckName(deck.name);
+                  setDeckDesc(deck.description);
+                  setIsEditingDeck(true);
+                }}
+                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title="编辑学习集信息"
+              >
+                <Edit2 className="w-6 h-6" />
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -331,6 +354,8 @@ export default function DeckDetails() {
           )}
         </div>
       </div>
+
+      <AiGenerateModal isOpen={isAiModalOpen} onClose={closeAiModal} deckId={deck.id} addCard={addCard} />
     </div>
   );
 }

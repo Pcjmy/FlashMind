@@ -15,3 +15,17 @@ export interface Card {
   createdAt: number;
   updatedAt: number;
 }
+
+export type AiMode = 'basic' | 'deep';
+
+export type AiDraftCard = {
+  id: string;
+  question: string;
+  answer: string;
+  isEditing: boolean;
+  editQuestion: string;
+  editAnswer: string;
+  isRegenerating: boolean;
+};
+
+export type OpenAiChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
